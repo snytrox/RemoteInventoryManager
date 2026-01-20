@@ -5,24 +5,23 @@ from typing import Optional, List
 # ItemBase: Bir eşya için ortak olan temel alanlar.
 class ItemBase(BaseModel):
     name: str
-    serial_number: str # Modellerde str yapmıştık, burada da str olması tutarlılık sağlar.
+    serial_number: str
     category: str
 
-# ItemCreate: Yeni eşya eklerken kullanılan şema.
 class ItemCreate(ItemBase):
     owner_id: Optional[int] = None # Eşyayı eklerken birine atamak zorunda değiliz.
 
 # Item: API'den dışarıya (kullanıcıya) gönderilen eşya verisi.
 class Item(ItemBase):
-    id: int # Veritabanından gelen ID.
-    status: str # available, assigned vb.
+    id: int
+    status: str 
     
     class Config:
         # SQLAlchemy nesnelerini otomatik olarak Pydantic'e çevirmek için şarttır.
         from_attributes = True
 
 
-# UserBase: Kullanıcının her yerde görünen temel bilgileri.
+# UserBase: Kullanıcının temel bilgileri.
 class UserBase(BaseModel):
     username: str
     email: EmailStr # Email formatında olup olmadığını otomatik kontrol eder.
@@ -38,5 +37,5 @@ class User(UserBase):
     items: List[Item] = [] # Kullanıcının üzerine zimmetli eşyaları da liste olarak döneriz.
     
     class Config:
-        # Pydantic v2'de 'from_attributes', v1'de 'orm_mode' olarak geçer.
         from_attributes = True
+
