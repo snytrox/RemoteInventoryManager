@@ -1,5 +1,5 @@
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import List, Optional
 from database import Base
 
@@ -43,5 +43,6 @@ class Item(Base):
     
     # İLİŞKİ: Bu eşyadan, sahibinin bilgilerine (User objesine) hızlıca ulaşmamızı sağlar.
     owner: Mapped[Optional["User"]] = relationship(back_populates="items")
+
 
 
