@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from database import engine, Base, get_db
-from typing import List # List'i buraya eklemeyi unutma, yoksa hata alırsın!
+from typing import List # bu List tür belirtmeye yarıyor List["User"] user sınıfından veri
 import models
 import schemas
 
@@ -10,26 +10,30 @@ import schemas
 app = FastAPI(title="Remote Inventory Manager")
 
 # Uygulama ayağa kalkarken (startup) çalışacak olan sihirli fonksiyon
-@app.on_event("startup")
+@app.on_event("startup") # Uygulama başladığında bu asenkron fonksiyonu tetikle
 async def startup():
-    # Veritabanı motoru üzerinden bir bağlantı açıyoruz
+    # engine.begin(): "Ya hep ya hiç" kuralını (Transaction) başlatır. 
+    # Bir tablo bile oluşamazsa, yapılan tüm işlemleri geri alır (Rollback), veritabanını kirletmez.
     async with engine.begin() as conn:
-        # Modellerdeki tablolar Postgres'te yoksa onları otomatik oluşturur
+        
+        # run_sync: SQLAlchemy'nin eski tip senkron (sync) 'create_all' fonksiyonunu, 
+        # asenkron (async) bağlantı hattı üzerinden güvenle çalıştırmamızı sağlayan köprüdür.
+        # models.Base.metadata.create_all: Modellerde (User, Item) tanımladığın tüm tabloları 
+        # Postgres içinde fiziksel olarak oluşturur (Eğer zaten varsa dokunmaz).
         await conn.run_sync(models.Base.metadata.create_all)
 
 # Giriş sayfamız (Sistemin çalışıp çalışmadığını anlamak için)
 @app.get("/")
 async def root():
-    return {"status": "Sistem aktif", "hedef": "Polonya"}
+    return {"status": "Sistem aktif"}
 
 # 1. KULLANICI OLUŞTURMA (POST)
 @app.post("/users", response_model=schemas.User)
 async def create_user(user: schemas.UserCreate, db: AsyncSession = Depends(get_db)):
-    # SORGULAMA: Aynı kullanıcı adıyla başka biri var mı?
     # select(models.User) -> "User tablosundan seç" demek
     query = select(models.User).filter(models.User.username == user.username)
     result = await db.execute(query) # Sorguyu çalıştır
-    db_user_check = result.scalar_one_or_none() # Sonuç varsa al, yoksa None dön
+    db_user_check = result.scalar_one_or_none() # Sonuç varsa al, yoksa ya da birden fazla sonuç varsa None dön
     
     if db_user_check:
         # Eğer varsa hata fırlat (400 Bad Request)
@@ -39,7 +43,7 @@ async def create_user(user: schemas.UserCreate, db: AsyncSession = Depends(get_d
     new_user = models.User(
         username=user.username,
         email=user.email,
-        hashed_password=user.password  # NOT: Gerçek projede şifre mutlaka 'bcrypt' ile hashlenmeli!
+        hashed_password=user.password  #  Gerçek projede şifre mutlaka 'bcrypt' ile hashlenmeli!
     )
     
     db.add(new_user) # Hafızaya ekle
@@ -68,3 +72,4 @@ async def read_user(user_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Kullanici bulunamadi kocum!")
     
     return user
+
