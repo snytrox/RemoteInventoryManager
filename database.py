@@ -3,13 +3,13 @@ from sqlalchemy.orm import DeclarativeBase
 
 # 1. Veritabanı Bağlantı Adresi (Connection String)
 # postgresql+asyncpg: Postgres kullanacağımızı ve asenkron (asyncpg) sürücüsünü kullanacağımızı belirtir.
-# postgres:123456: Kullanıcı adı ve şifren.
+# postgres:123456: Kullanıcı adı ve şifre.
 # @localhost/postgres: Kendi bilgisayarındaki 'postgres' isimli veritabanına bağlanır.
 DATABASE_URL = "postgresql+asyncpg://postgres:123456@localhost/postgres"
 
 # 2. Asenkron Motorun (Engine) Oluşturulması
 # create_async_engine: Veritabanı ile Python arasındaki ana boru hattını döşer.
-# echo=True: Arka planda çalışan tüm SQL sorgularını terminale yazar (Öğrenme aşamasında hayat kurtarır).
+# echo=True: Arka planda çalışan tüm SQL sorgularını terminale yazar.
 engine = create_async_engine(DATABASE_URL, echo=True)
 
 # 3. Oturum Fabrikası (SessionMaker)
@@ -30,3 +30,4 @@ class Base(DeclarativeBase):
 async def get_db():
     async with SessionLocal() as session:
         yield session
+
